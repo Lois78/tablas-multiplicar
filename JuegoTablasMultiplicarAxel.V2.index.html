@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juega a Multiplicar Con Axel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+  <div class="w-full max-w-2xl">
+    <div class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl p-6 md:p-8">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl md:text-5xl font-extrabold text-slate-800">Juega a Multiplicar Con Axel</h1>
+        <p class="text-slate-600 mt-2">Resuelve 10 multiplicaciones aleatorias del 1 al 10 antes de que se acabe el tiempo</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-emerald-700 font-medium">Aciertos</p>
+          <p id="scoreCorrect" class="text-3xl font-bold text-emerald-600">0</p>
+        </div>
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-rose-700 font-medium">Fallos</p>
+          <p id="scoreWrong" class="text-3xl font-bold text-rose-600">0</p>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-amber-700 font-medium">Tiempo</p>
+          <p id="timer" class="text-3xl font-bold text-amber-600">50</p>
+        </div>
+        <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-sky-700 font-medium">Puntos</p>
+          <p id="points" class="text-3xl font-bold text-sky-600">0</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-violet-50 border border-violet-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-violet-700 font-medium">Pregunta</p>
+          <p id="questionCounter" class="text-2xl font-bold text-violet-600">1 / 10</p>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+          <p class="text-sm text-slate-700 font-medium">Estado del set</p>
+          <p id="setStatus" class="text-lg font-bold text-slate-700">En juego</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-100 rounded-3xl p-6 md:p-8 text-center shadow-inner">
+        <p class="text-slate-500 text-sm uppercase tracking-widest mb-2">¿Cuánto es?</p>
+        <div id="question" class="text-4xl md:text-5xl font-extrabold text-slate-800">2 × 3</div>
+      </div>
+
+      <form id="quizForm" class="mt-6 space-y-4">
+        <label for="answer" class="block text-sm font-medium text-slate-700">Escribe tu respuesta</label>
+        <input
+          id="answer"
+          type="number"
+          inputmode="numeric"
+          autocomplete="off"
+          class="w-full rounded-2xl border border-slate-300 px-4 py-3 text-lg focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition"
+          placeholder="Tu respuesta"
+          required
+        />
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            type="submit"
+            id="checkBtn"
+            class="flex-1 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 shadow-lg transition transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Comprobar
+          </button>
+          <button
+            type="button"
+            id="nextBtn"
+            class="flex-1 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-3 px-4 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Siguiente
+          </button>
+          <button
+            type="button"
+            id="restartBtn"
+            class="flex-1 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 shadow-lg transition"
+          >
+            Reiniciar set
+          </button>
+        </div>
+      </form>
+
+      <div id="message" class="mt-5 min-h-[56px] rounded-2xl px-4 py-3 text-center font-semibold text-lg bg-slate-50 text-slate-600 border border-slate-200">
+        ¡Empieza a practicar!
+      </div>
+
+      <div class="mt-6 text-sm text-slate-500 text-center space-y-1">
+        <p>El set termina al completar 10 respuestas o al llegar a 0 segundos.</p>
+        <p>Cuanto más rápido respondas bien, más puntos consigues.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question');
+    const answerEl = document.getElementById('answer');
+    const messageEl = document.getElementById('message');
+    const scoreCorrectEl = document.getElementById('scoreCorrect');
+    const scoreWrongEl = document.getElementById('scoreWrong');
+    const timerEl = document.getElementById('timer');
+    const pointsEl = document.getElementById('points');
+    const questionCounterEl = document.getElementById('questionCounter');
+    const setStatusEl = document.getElementById('setStatus');
+    const quizForm = document.getElementById('quizForm');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const checkBtn = document.getElementById('checkBtn');
+
+    let num1 = 1;
+    let num2 = 1;
+    let correct = 0;
+    let wrong = 0;
+    let points = 0;
+    let currentQuestion = 1;
+    let totalQuestions = 10;
+    let timeLeft = 50;
+    let timerInterval = null;
+    let gameOver = false;
+
+    function randomNumber() {
+      return Math.floor(Math.random() * 10) + 1;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+
+        if (timeLeft <= 10) {
+          timerEl.classList.add('text-red-600');
+          timerEl.classList.remove('text-amber-600');
+        } else {
+          timerEl.classList.add('text-amber-600');
+          timerEl.classList.remove('text-red-600');
+        }
+
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          timerEl.textContent = timeLeft;
+          finishGame('time');
+        }
+      }, 1000);
+    }
+
+    function newQuestion() {
+      if (gameOver) return;
+      num1 = randomNumber();
+      num2 = randomNumber();
+      questionEl.textContent = `${num1} × ${num2}`;
+      questionCounterEl.textContent = `${currentQuestion} / ${totalQuestions}`;
+      answerEl.value = '';
+      answerEl.focus();
+    }
+
+    function setMessage(text, type) {
+      messageEl.textContent = text;
+
+      const styles = {
+        neutral: 'mt-5 min-h-[56px] rounded-2xl px-4 py-3 text-center font-semibold text-lg bg-slate-50 text-slate-600 border border-slate-200',
+        success: 'mt-5 min-h-[56px] rounded-2xl px-4 py-3 text-center font-semibold text-lg bg-emerald-50 text-emerald-700 border border-emerald-200',
+        error: 'mt-5 min-h-[56px] rounded-2xl px-4 py-3 text-center font-semibold text-lg bg-rose-50 text-rose-700 border border-rose-200',
+        final: 'mt-5 min-h-[56px] rounded-2xl px-4 py-3 text-center font-semibold text-lg bg-sky-50 text-sky-700 border border-sky-200'
+      };
+
+      messageEl.className = styles[type] || styles.neutral;
+    }
+
+    function updateScore() {
+      scoreCorrectEl.textContent = correct;
+      scoreWrongEl.textContent = wrong;
+      pointsEl.textContent = points;
+    }
+
+    function calculatePoints() {
+      return Math.max(1, timeLeft);
+    }
+
+    function lockGameControls(isLocked) {
+      answerEl.disabled = isLocked;
+      checkBtn.disabled = isLocked;
+      nextBtn.disabled = isLocked;
+    }
+
+    function finishGame(reason) {
+      if (gameOver) return;
+      gameOver = true;
+      clearInterval(timerInterval);
+      lockGameControls(true);
+      setStatusEl.textContent = 'Set terminado';
+
+      if (reason === 'time') {
+        setMessage(`⏰ Tiempo agotado. Has conseguido ${points} puntos, con ${correct} aciertos y ${wrong} fallos.`, 'final');
+      } else {
+        setMessage(`🏁 Set completado. Has conseguido ${points} puntos, con ${correct} aciertos y ${wrong} fallos.`, 'final');
+      }
+    }
+
+    function nextStepAfterAnswer() {
+      if (currentQuestion >= totalQuestions) {
+        finishGame('completed');
+      } else {
+        currentQuestion++;
+        setTimeout(newQuestion, 900);
+      }
+    }
+
+    quizForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      if (gameOver) return;
+
+      const rawValue = answerEl.value.trim();
+      const userAnswer = Number(rawValue);
+      const expected = num1 * num2;
+
+      if (rawValue === '') {
+        setMessage('Por favor, escribe una respuesta.', 'error');
+        return;
+      }
+
+      if (userAnswer === expected) {
+        correct++;
+        const earnedPoints = calculatePoints();
+        points += earnedPoints;
+        updateScore();
+        setMessage(`¡Correcto! ${num1} × ${num2} = ${expected}. +${earnedPoints} puntos`, 'success');
+      } else {
+        wrong++;
+        updateScore();
+        setMessage(`No es correcto. ${num1} × ${num2} = ${expected}. +0 puntos`, 'error');
+      }
+
+      nextStepAfterAnswer();
+    });
+
+    nextBtn.addEventListener('click', function () {
+      if (gameOver) return;
+      setMessage('Pregunta saltada. Nueva multiplicación.', 'neutral');
+      wrong++;
+      updateScore();
+      nextStepAfterAnswer();
+    });
+
+    restartBtn.addEventListener('click', function () {
+      clearInterval(timerInterval);
+      correct = 0;
+      wrong = 0;
+      points = 0;
+      currentQuestion = 1;
+      timeLeft = 50;
+      gameOver = false;
+      timerEl.textContent = timeLeft;
+      timerEl.classList.remove('text-red-600');
+      timerEl.classList.add('text-amber-600');
+      setStatusEl.textContent = 'En juego';
+      updateScore();
+      lockGameControls(false);
+      setMessage('Nuevo set iniciado. ¡A por los 10!', 'neutral');
+      newQuestion();
+      startTimer();
+    });
+
+    updateScore();
+    newQuestion();
+    startTimer();
+  </script>
+</body>
+</html>
